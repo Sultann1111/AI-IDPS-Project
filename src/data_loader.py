@@ -1,13 +1,11 @@
-# src/data_loader.py
+"""
+Dataset loading and preprocessing module
+"""
 
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 
 
-def load_data(train_path, test_path):
-    """
-    Load UNSW-NB15 dataset
-    """
+def prepare_datasets(train_path, test_path):
 
     train_df = pd.read_csv(train_path)
     test_df = pd.read_csv(test_path)
@@ -15,48 +13,32 @@ def load_data(train_path, test_path):
     print("Training Data Shape:", train_df.shape)
     print("Testing Data Shape:", test_df.shape)
 
-    return train_df, test_df
+    # Remove unnecessary columns
+    columns_to_drop = ["id", "attack_cat"]
 
+    for col in columns_to_drop:
+        if col in train_df.columns:
+            train_df.drop(columns=[col], inplace=True)
 
-def preprocess_data(df):
-    """
-    Clean dataset and encode categorical features
-    """
+        if col in test_df.columns:
+            test_df.drop(columns=[col], inplace=True)
 
-    df = df.copy()
-
-    # Remove columns that cause data leakage
-    if "attack_cat" in df.columns:
-        df = df.drop(columns=["attack_cat"])
-
-    if "id" in df.columns:
-        df = df.drop(columns=["id"])
-
-    # Encode categorical columns
-    categorical_cols = df.select_dtypes(include=["object"]).columns
+    # Encode categorical features
+    categorical_cols = ["proto", "service", "state"]
 
     for col in categorical_cols:
-        encoder = LabelEncoder()
-        df[col] = encoder.fit_transform(df[col])
+        if col in train_df.columns:
+            train_df[col] = train_df[col].astype("category").cat.codes
 
-    return df
+        if col in test_df.columns:
+            test_df[col] = test_df[col].astype("category").cat.codes
 
-
-def prepare_datasets():
-
-    train_path = "UNSW_NB15_training-set.csv"
-    test_path = "UNSW_NB15_testing-set.csv"
-
-    train_df, test_df = load_data(train_path, test_path)
-
-    train_df = preprocess_data(train_df)
-    test_df = preprocess_data(test_df)
-
+    # Split features and labels
+    X_train = train_df.drop("label", axis=1)
     y_train = train_df["label"]
-    X_train = train_df.drop(columns=["label"])
 
+    X_test = test_df.drop("label", axis=1)
     y_test = test_df["label"]
-    X_test = test_df.drop(columns=["label"])
 
     feature_names = X_train.columns.tolist()
 

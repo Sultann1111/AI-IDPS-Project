@@ -1,19 +1,19 @@
-# src/model.py
+"""
+Model training module
+"""
 
-import lightgbm as lgb
-import joblib
 import os
+import joblib
+from lightgbm import LGBMClassifier
 
 
 def train_model(X_train, y_train):
-    """
-    Train the LightGBM model
-    """
 
-    model = lgb.LGBMClassifier(
-        n_estimators=200,
+    model = LGBMClassifier(
+        n_estimators=500,
         learning_rate=0.05,
-        max_depth=8,
+        max_depth=-1,
+        num_leaves=64,
         random_state=42
     )
 
@@ -22,13 +22,12 @@ def train_model(X_train, y_train):
     return model
 
 
-def save_model(model, path):
-    """
-    Save trained model
-    """
+def save_model(model):
 
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    os.makedirs("models", exist_ok=True)
+
+    path = "models/ids_model.pkl"
 
     joblib.dump(model, path)
 
-    print(f"Model saved to: {path}")
+    print("Model saved to:", path)
